@@ -29,16 +29,39 @@ dirs-y = src
 cc-option=$(shell if test -z "`$(1) $(2) -S -o /dev/null -xc /dev/null 2>&1`" \
     ; then echo "$(2)"; else echo "$(3)"; fi ;)
 
-CFLAGS := -I$(OUT) -Isrc -I$(OUT)board-generic/ -std=gnu11 -O2 -MD \
-    -Wall -Wold-style-definition $(call cc-option,$(CC),-Wtype-limits,) \
-    -ffunction-sections -fdata-sections -fno-delete-null-pointer-checks
-CFLAGS += -flto -fwhole-program -fno-use-linker-plugin -ggdb3
-
-OBJS_klipper.elf = $(patsubst %.c, $(OUT)src/%.o,$(src-y))
-OBJS_klipper.elf += $(OUT)compile_time_request.o
-CFLAGS_klipper.elf = $(CFLAGS) -Wl,--gc-sections
-
 CPPFLAGS = -I$(OUT) -P -MD -MT $@
+
+CFLAGS += -O3 -ggdb3
+CFLAGS += -Wl,-O2 -flto=80 -fwhole-program -fno-use-linker-plugin 
+
+CFLAGS += -std=gnu11
+
+CFLAGS += -ffunction-sections
+CFLAGS += -fdata-sections
+CFLAGS += -fsection-anchors
+CFLAGS += -Wl,--gc-sections
+
+CFLAGS += -ffreestanding
+CFLAGS += -fno-builtin
+
+#CFLAGS += -fno-delete-null-pointer-checks
+
+CFLAGS += -Wall
+CFLAGS += -Wextra
+CFLAGS += -Wno-unused-parameter
+CFLAGS += -Wno-sign-compare
+CFLAGS += -Wno-implicit-int
+CFLAGS += -Wno-old-style-declaration
+
+CFLAGS += -I$(OUT)
+CFLAGS += -Isrc
+CFLAGS += -I$(OUT)board-generic
+CFLAGS += -MD
+
+CFLAGS_klipper.elf = $(CFLAGS)
+
+OBJS_klipper.elf = $(patsubst %.c,$(OUT)src/%.o,$(src-y))
+OBJS_klipper.elf += $(OUT)compile_time_request.o
 
 # Default targets
 target-y := $(OUT)klipper.elf
@@ -77,9 +100,9 @@ $(OUT)klipper.elf: $(OBJS_klipper.elf)
 $(OUT)%.o.ctr: $(OUT)%.o
 	$(Q)$(OBJCOPY) -j '.compile_time_request' -O binary $^ $@
 
-$(OUT)compile_time_request.o: $(patsubst %.c, $(OUT)src/%.o.ctr,$(src-y)) ./scripts/buildcommands.py
+$(OUT)compile_time_request.o: $(patsubst %.c,$(OUT)src/%.o.ctr,$(src-y)) ./scripts/buildcommands.py
 	@echo "  Building $@"
-	$(Q)cat $(patsubst %.c, $(OUT)src/%.o.ctr,$(src-y)) | tr -s '\0' '\n' > $(OUT)compile_time_request.txt
+	$(Q)cat $(patsubst %.c,$(OUT)src/%.o.ctr,$(src-y)) | tr -s '\0' '\n' > $(OUT)compile_time_request.txt
 	$(Q)$(PYTHON) ./scripts/buildcommands.py -d $(OUT)klipper.dict -t "$(CC);$(AS);$(LD);$(OBJCOPY);$(OBJDUMP);$(STRIP)" $(OUT)compile_time_request.txt $(OUT)compile_time_request.c
 	$(Q)$(CC) $(CFLAGS) -c $(OUT)compile_time_request.c -o $@
 
@@ -87,7 +110,7 @@ $(OUT)compile_time_request.o: $(patsubst %.c, $(OUT)src/%.o.ctr,$(src-y)) ./scri
 
 create-board-link:
 	@echo "  Creating symbolic link $(OUT)board"
-	$(Q)mkdir -p $(addprefix $(OUT), $(dirs-y))
+	$(Q)mkdir -p $(addprefix $(OUT),$(dirs-y))
 	$(Q)rm -f $(OUT)*.d $(patsubst %,$(OUT)%/*.d,$(dirs-y))
 	$(Q)rm -f $(OUT)board
 	$(Q)ln -sf $(CURDIR)/src/$(CONFIG_BOARD_DIRECTORY) $(OUT)board
