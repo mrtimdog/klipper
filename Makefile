@@ -31,20 +31,26 @@ cc-option=$(shell if test -z "`$(1) $(2) -S -o /dev/null -xc /dev/null 2>&1`" \
 
 CPPFLAGS = -I$(OUT) -P -MD -MT $@
 
-CFLAGS += -O3 -ggdb3
-CFLAGS += -Wl,-O2 -flto=80 -fwhole-program -fno-use-linker-plugin 
+CFLAGS += -O3
+CFLAGS += -ggdb3
 
-CFLAGS += -std=gnu11
+CFLAGS += -flto=80
+CFLAGS += -fwhole-program
+CFLAGS += -fno-use-linker-plugin 
 
 CFLAGS += -ffunction-sections
 CFLAGS += -fdata-sections
 CFLAGS += -fsection-anchors
-CFLAGS += -Wl,--gc-sections
 
 CFLAGS += -ffreestanding
 CFLAGS += -fno-builtin
 
 #CFLAGS += -fno-delete-null-pointer-checks
+
+CFLAGS += -Wl,-O2
+CFLAGS += -Wl,--gc-sections
+
+CFLAGS += -std=gnu11
 
 CFLAGS += -Wall
 CFLAGS += -Wextra
