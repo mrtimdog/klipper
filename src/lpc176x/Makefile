@@ -5,9 +5,16 @@ CROSS_PREFIX=arm-none-eabi-
 
 dirs-y += src/lpc176x src/generic lib/lpc176x/device
 
-CFLAGS += -mthumb -mcpu=cortex-m3 -Ilib/lpc176x/device -Ilib/cmsis-core
+CFLAGS += -specs=/usr/arm-none-eabi/lib/thumb/v7-m/nofp/nano.specs
+CFLAGS += -specs=/usr/arm-none-eabi/lib/thumb/v7-m/nofp/nosys.specs
 
-CFLAGS_klipper.elf += -nostdlib -lgcc -lc_nano
+CFLAGS += -mthumb -mcpu=cortex-m3 -Ilib/lpc176x/device -Ilib/cmsis-core
+#CFLAGS += -mthumb-interwork -mcpu=cortex-m3 -Ilib/lpc176x/device -Ilib/cmsis-core
+
+#CFLAGS_klipper.elf += -nostdlib
+#CFLAGS_klipper.elf += -lgcc
+CFLAGS_klipper.elf += -lc_nano
+#CFLAGS_klipper.elf += -specs=/usr/arm-none-eabi/lib/thumb/v7-m/nofp/nano.specs
 CFLAGS_klipper.elf += -T $(OUT)src/generic/armcm_link.ld
 $(OUT)klipper.elf: $(OUT)src/generic/armcm_link.ld
 

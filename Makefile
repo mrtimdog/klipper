@@ -18,7 +18,7 @@ LD=$(CROSS_PREFIX)ld
 OBJCOPY=$(CROSS_PREFIX)objcopy
 OBJDUMP=$(CROSS_PREFIX)objdump
 STRIP=$(CROSS_PREFIX)strip
-CPP=cpp
+CPP=$(CROSS_PREFIX)cpp
 PYTHON=python3
 
 # Source files
@@ -26,13 +26,13 @@ src-y =
 dirs-y = src
 
 # Default compiler flags
-cc-option=$(shell if test -z "`$(1) $(2) -S -o /dev/null -xc /dev/null 2>&1`" \
-    ; then echo "$(2)"; else echo "$(3)"; fi ;)
 
 CPPFLAGS = -I$(OUT) -P -MD -MT $@
 
 CFLAGS += -O3
-CFLAGS += -ggdb3
+CFLAGS += -g0
+#CFLAGS += -g
+#CFLAGS += -ggdb3
 
 CFLAGS += -flto=80
 CFLAGS += -fwhole-program
@@ -42,45 +42,39 @@ CFLAGS += -ffunction-sections
 CFLAGS += -fdata-sections
 CFLAGS += -fsection-anchors
 
-CFLAGS += -ffreestanding
-CFLAGS += -fno-builtin
+CFLAGS += -fno-delete-null-pointer-checks
 
-#CFLAGS += -fno-delete-null-pointer-checks
+CFLAGS += -ffreestanding
 
 CFLAGS += -Wl,-O2
+CFLAGS += -Wl,-Map=$@.map
 CFLAGS += -Wl,--gc-sections
 
 CFLAGS += -std=gnu11
 
 CFLAGS += -Wall
 CFLAGS += -Wextra
-CFLAGS += -Wno-unused-parameter
-CFLAGS += -Wno-sign-compare
+
+CFLAGS += -Wno-array-bounds
 CFLAGS += -Wno-implicit-int
 CFLAGS += -Wno-old-style-declaration
+CFLAGS += -Wno-sign-compare
+CFLAGS += -Wno-unused-parameter
 
 CFLAGS += -I$(OUT)
 CFLAGS += -Isrc
 CFLAGS += -I$(OUT)board-generic
 CFLAGS += -MD
 
-CFLAGS_klipper.elf = $(CFLAGS)
-
-OBJS_klipper.elf = $(patsubst %.c,$(OUT)src/%.o,$(src-y))
+OBJS_klipper.elf += $(patsubst %.c,$(OUT)src/%.o,$(src-y))
 OBJS_klipper.elf += $(OUT)compile_time_request.o
+
+CFLAGS_klipper.elf += $(CFLAGS)
 
 # Default targets
 target-y := $(OUT)klipper.elf
 
 all:
-
-# Run with "make V=1" to see the actual compile commands
-ifdef V
-Q=
-else
-Q=@
-MAKEFLAGS += --no-print-directory
-endif
 
 # Include board specific makefile
 include src/Makefile
